@@ -8,6 +8,7 @@ venv/
 
 # Database
 db.sqlite3
+*.sqlite3
 
 # IDEs / Editors
 .vscode/
