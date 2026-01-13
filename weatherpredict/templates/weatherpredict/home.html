@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Weather Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .weather-display {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .weather-display img {
+            width: 100px;
+            height: 100px;
+        }
+
+        .temp {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .error {
+            color: red;
+            margin: 10px 0;
+            text-align: center;
+            padding: 15px;
+            background: #ffe6e6;
+            border-radius: 5px;
+        }
+
+        .history {
+            margin-top: 30px;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-left: 3px solid #667eea;
+        }
+
+        .logout {
+            float: right;
+            background: #dc3545;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout:hover {
+            background: #c82333;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="{% url 'logout' %}" class="logout">Logout</a>
+        <h1>🌤️ Weather Predictor</h1>
+        <p style="text-align: center;">Welcome, <strong>{{ user.username }}</strong>!</p>
+
+        <div id="loadingDiv" class="loading">
+            <p>🌍 Detecting your location...</p>
+        </div>
+
+        <div id="errorDiv" style="display:none;" class="error"></div>
+
+        <div id="weatherDiv" style="display:none;">
+            {% if weather_data %}
+            <div class="weather-display">
+                <h2>{{ weather_data.city }}</h2>
+                <img src="http://openweathermap.org/img/wn/{{ weather_data.icon }}@2x.png" alt="Weather icon">
+                <div class="temp">{{ weather_data.temperature }}°C</div>
+                <p style="font-size: 18px; text-transform: capitalize;">{{ weather_data.description }}</p>
+                <p><strong>Humidity:</strong> {{ weather_data.humidity }}%</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <button class="refresh-btn" onclick="getLocation()">🔄 Refresh Weather</button>
+
+
+    </div>
+
+    <form id="weatherForm" method="post" style="display:none;">
+        {% csrf_token %}
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+    </form>
+
+    <script>
+
+        function getLocation() {
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('errorDiv').style.display = 'none';
+            document.getElementById('weatherDiv').style.display = 'none';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                showError({ message: "Geolocation is not supported by your browser." });
+            }
+        }
+
+        function showPosition(position) {
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
+            document.getElementById('weatherForm').submit();
+        }
+
+        function showError(error) {
+            document.getElementById('loadingDiv').style.display = 'none';
+            let errorDiv = document.getElementById('errorDiv');
+            errorDiv.style.display = 'block';
+
+            let message = '';
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "You denied location access. Please enable location permissions to see your weather.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    message = "Location request timed out.";
+                    break;
+                default:
+                    message = error.message || "An unknown error occurred.";
+            }
+            errorDiv.innerHTML = message;
+        }
+
+        // Show weather data if it exists
+        {% if weather_data %}
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('weatherDiv').style.display = 'block';
+        {% endif %}
+
+        // Show server-side error if it exists
+        {% if error %}
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('errorDiv').style.display = 'block';
+        document.getElementById('errorDiv').innerHTML = "{{ error }}";
+        {% endif %}
+    </script>
+</body>
+
+</html>
