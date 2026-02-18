@@ -105,7 +105,10 @@
 
 <body>
     <div class="container">
-        <a href="{% url 'logout' %}" class="logout">Logout</a>
+        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="logout">Logout</button>
+        </form>
         <h1>🌤️ Weather Predictor</h1>
         <p style="text-align: center;">Welcome, <strong>{{ user.username }}</strong>!</p>
 
@@ -191,6 +194,12 @@
         document.getElementById('loadingDiv').style.display = 'none';
         document.getElementById('errorDiv').style.display = 'block';
         document.getElementById('errorDiv').innerHTML = "{{ error }}";
+        {% endif %}
+
+        // Auto-load weather on first visit (if no weather data or error exists)
+        {% if not weather_data and not error %}
+        // Automatically get location when page loads
+        getLocation();
         {% endif %}
     </script>
 </body>
